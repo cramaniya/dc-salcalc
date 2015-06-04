@@ -52,13 +52,13 @@ public class Wage implements Serializable {
 	/**
 	 * Number of working hours logged.
 	 */
-	@FieldOrder(value = 3)
+	@FieldOrder(value = 4)
 	private Integer sundayWorkingHours;
 
 	/**
 	 * Number of working hours on public holiday logged.
 	 */
-	@FieldOrder(value = 4)
+	@FieldOrder(value = 5)
 	private Integer holidayWorkingHours;
 
 	/**
@@ -66,76 +66,83 @@ public class Wage implements Serializable {
 	 * AM shift: 8:00 - 15:00 (7 hours).
 	 * PM shift: 15:00 - 22:00 (7 hours).
 	 */
-	@FieldOrder(value = 5)
+//	@FieldOrder(value = 5)
 	private Integer daysShiftAmPm = 0;
 
 	/**
 	 * Number of days working the night shift.
 	 * Night shift: 22:00 - 8:00 (10 hours)
 	 */
-	@FieldOrder(value = 6)
+//	@FieldOrder(value = 6)
 	private Integer daysShiftNight = 0;
 
-	/**
-	 * Number of working hours for incentives.
-	 * Maximum is always 160.
-	 */
-	@FieldOrder(value = 7)
-	private Integer incentivesHours;
 
 	/**
 	 * Number of times got called out in area 1.
 	 */
-	@FieldOrder(value = 8)
+	@FieldOrder(value = 6)
 	private Integer numOfCallOutArea1;
 
 	/**
 	 * Number of times got called out in area 2.
 	 */
-	@FieldOrder(value = 9)
+	@FieldOrder(value = 7)
 	private Integer numOfCallOutArea2;
 
 	/**
 	 * Number of times got called out in area 3.
 	 */
-	@FieldOrder(value = 10)
+	@FieldOrder(value = 8)
 	private Integer numOfCallOutArea3;
 
 	/**
 	 * Jamsostek deduction.
 	 */
-	@FieldOrder(value = 11)
+	@FieldOrder(value = 9)
 	private Boolean jamsostekDeduction;
 
 	/**
 	 * Koperasi deduction.
 	 */
-	@FieldOrder(value = 12)
+	@FieldOrder(value = 10)
 	private Boolean koperasiDeduction;
 
 	/**
 	 * Tax deduction.
 	 */
-	@FieldOrder(value = 13)
+	@FieldOrder(value = 11)
 	private Boolean taxDeduction;
 
 	/**
 	 * Tax.
 	 */
-	@FieldOrder(value = 14)
+	@FieldOrder(value = 12)
 	private BigDecimal tax;
 
 	/**
 	 * Creation date.
 	 */
-	@FieldOrder(value = 15)
+	@FieldOrder(value = 13)
 	private Date createdTs;
 
+	/**
+	 * Number of working hours for incentives.
+	 * Maximum is always 160.
+	 */
+	private transient Integer incentivesHours;
 	private transient BigDecimal decNormalWorkingHours;
 	private transient BigDecimal decSundayWorkingHours;
 	private transient BigDecimal decHolidayWorkingHours;
 
 	private void prepare() {
+		// working hours for incentives
+		if (normalWorkingHours > 160) {
+			this.incentivesHours = 160;
+		} else {
+			this.incentivesHours = normalWorkingHours;
+		}
+
+		// set BigDecimal values
 		decNormalWorkingHours = BigDecimal.valueOf(normalWorkingHours);
 		decSundayWorkingHours = BigDecimal.valueOf(sundayWorkingHours * 1.5); // normal hours * 1.5
 		decHolidayWorkingHours = BigDecimal.valueOf(holidayWorkingHours * 2); // normal hours * 2
@@ -260,21 +267,13 @@ public class Wage implements Serializable {
 	 */
 	public Wage(Month month, Integer year, int normalWorkingHours, int sundayWorkingHours, int
 			holidayWorkingHours, int numOfCallOutArea1, int numOfCallOutArea2, int numOfCallOutArea3,
-	            boolean jamsostekDeduction, boolean koperasiDeduction, boolean taxDeduction, BigDecimal tax
-
-	) {
+	            boolean jamsostekDeduction, boolean koperasiDeduction, boolean taxDeduction, BigDecimal tax) {
 
 		this.month = month;
 		this.year = year;
 
 		this.normalWorkingHours = normalWorkingHours;
 		this.sundayWorkingHours = sundayWorkingHours;
-		// working hours for incentives
-		if (normalWorkingHours > 160) {
-			this.incentivesHours = 160;
-		} else {
-			this.incentivesHours = normalWorkingHours;
-		}
 		this.holidayWorkingHours = holidayWorkingHours;
 		this.numOfCallOutArea1 = numOfCallOutArea1;
 		this.numOfCallOutArea2 = numOfCallOutArea2;
@@ -313,12 +312,6 @@ public class Wage implements Serializable {
 
 		this.normalWorkingHours = normalWorkingHours;
 		this.sundayWorkingHours = sundayWorkingHours;
-		// working hours for incentives
-		if (normalWorkingHours > 160) {
-			this.incentivesHours = 160;
-		} else {
-			this.incentivesHours = normalWorkingHours;
-		}
 		this.holidayWorkingHours = holidayWorkingHours;
 		this.numOfCallOutArea1 = numOfCallOutArea1;
 		this.numOfCallOutArea2 = numOfCallOutArea2;
@@ -335,6 +328,12 @@ public class Wage implements Serializable {
 		prepare();
 	}
 
+	/**
+	 * Objects is considered the same when they have the same month and year.
+	 *
+	 * @param o other Wage object
+	 * @return true if objects have the same month and year
+	 */
 	@Override
 	public boolean equals(Object o) {
 		if (this == o) return true;
@@ -342,9 +341,7 @@ public class Wage implements Serializable {
 
 		Wage wage = (Wage) o;
 
-		if (month != wage.month) return false;
-		return year.equals(wage.year);
-
+		return month == wage.month && year.equals(wage.year);
 	}
 
 	@Override

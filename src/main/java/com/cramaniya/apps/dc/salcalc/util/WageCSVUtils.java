@@ -1,5 +1,6 @@
 package com.cramaniya.apps.dc.salcalc.util;
 
+import com.cramaniya.apps.dc.salcalc.annotation.FieldOrder;
 import com.cramaniya.apps.dc.salcalc.configuration.WagePropertyConfig;
 import com.cramaniya.apps.dc.salcalc.model.Wage;
 import lombok.extern.slf4j.Slf4j;
@@ -36,7 +37,7 @@ public class WageCSVUtils {
 		Arrays.sort(fields, CustomComparator.FieldComparator);
 
 		for (Field field : fields) {
-			if (field.getName().equals("log") || field.getName().equals("serialVersionUID")) continue;
+			if (!field.isAnnotationPresent(FieldOrder.class)) continue;
 			fieldMap.put(field.getName(), field.getType());
 		}
 
@@ -47,7 +48,7 @@ public class WageCSVUtils {
 
 	public List<Wage> readFromCSV() {
 
-		BufferedReader bufferedReader = null;
+		BufferedReader bufferedReader;
 		try {
 			List<Wage> result = new ArrayList<>();
 			String line;
@@ -63,7 +64,6 @@ public class WageCSVUtils {
 					int i = 0;
 					for (Map.Entry<String, Class> fieldClassEntry : fieldMap.entrySet()) {
 						Field field = Wage.class.getDeclaredField(fieldClassEntry.getKey());
-						if (field.getName().equals("log")) continue;
 						Class type = fieldClassEntry.getValue();
 						setObjectField(field, type, wage, tokens[i]);
 						i++;
@@ -114,6 +114,7 @@ public class WageCSVUtils {
 			fileWriter = new FileWriter(csvFile, true);
 			BufferedWriter bufferedWriter = new BufferedWriter(fileWriter);
 
+			StringBuilder str = new StringBuilder();
 			for (String fieldName : fieldMap.keySet()) {
 				Field field = Wage.class.getDeclaredField(fieldName);
 				field.setAccessible(true);
@@ -123,12 +124,14 @@ public class WageCSVUtils {
 				} else {
 					bufferedWriter.append(String.valueOf(field.get(entry))).append(COLON_DELIMITER);
 				}
+				str.append(fieldName).append(": ").append(field.get(entry)).append("\n");
 				field.setAccessible(false);
 			}
 			bufferedWriter.append(NEW_LINE_SEPARATOR);
 			bufferedWriter.close();
 
 			log.info("Wage saved!");
+			log.debug("\n" + str.toString());
 		} catch (Exception e) {
 			e.printStackTrace();
 		} finally {

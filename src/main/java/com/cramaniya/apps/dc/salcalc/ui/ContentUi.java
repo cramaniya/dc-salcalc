@@ -247,8 +247,7 @@ public class ContentUi {
 		if (loadedWage == null) {
 			Month month = months.getSelectionModel().getSelectedItem();
 			Integer year = years.getSelectionModel().getSelectedItem();
-			String monthStr = StringUtils.capitalize(month.name().toLowerCase());
-			AlertBox.display("Alert", "No data found for " + monthStr + " " + year + "!", "");
+			AlertBox.display("Alert", "No data found for " + getMonthString(month) + " " + year + "!", "");
 			return;
 		}
 
@@ -270,6 +269,10 @@ public class ContentUi {
 		taxInput.getTextField().setText(String.valueOf(loadedWage.getTax()));
 	}
 
+	private String getMonthString(Month month) {
+		return StringUtils.capitalize(month.name().toLowerCase());
+	}
+
 	/**
 	 * Saves wage to a csv file.
 	 */
@@ -277,6 +280,8 @@ public class ContentUi {
 		Wage wage = getWage();
 		wage.setCreatedTs(new Date());
 		wageCsv.addToCSV(wage);
+
+		AlertBox.display("Entry saved", "Saved data for " + getMonthString(wage.getMonth()) + " " + wage.getYear(), "");
 	}
 
 	/**
@@ -314,9 +319,6 @@ public class ContentUi {
 		if (taxCheckBox.isSelected()) {
 			tax = getBigDecimal(taxInput, null);
 		}
-
-		log.debug("Find wage for {} {}", months.getSelectionModel().getSelectedItem(), years.getSelectionModel()
-				.getSelectedItem());
 
 		return new Wage(months.getSelectionModel().getSelectedItem(), years.getSelectionModel().getSelectedItem
 				(), workingHours, workingHoursSundays, workingHoursHoliday, numCallOut1, numCallOut2, numCallOut3,
