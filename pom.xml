@@ -4,7 +4,7 @@
 
     <groupId>com.cramaniya.apps</groupId>
     <artifactId>dc-salcalc</artifactId>
-    <version>0.1-SNAPSHOT</version>
+    <version>0.1</version>
     <packaging>jar</packaging>
 
     <name>dc-salcalc</name>
@@ -16,9 +16,11 @@
             <email>citra.ramaniya@gmail.com</email>
         </developer>
     </developers>
+
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <compiler.version>1.8</compiler.version>
+        <app.main.class>com.cramaniya.apps.dc.salcalc.App</app.main.class>
     </properties>
 
     <dependencies>
@@ -34,6 +36,27 @@
             <artifactId>lombok</artifactId>
             <version>1.14.8</version>
         </dependency>
+
+        <dependency>
+            <groupId>commons-lang</groupId>
+            <artifactId>commons-lang</artifactId>
+            <version>2.6</version>
+        </dependency>
+
+        <!-- Logging -->
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-log4j12</artifactId>
+            <version>1.7.12</version>
+        </dependency>
+
+        <!-- JSON -->
+        <dependency>
+            <groupId>org.codehaus.jackson</groupId>
+            <artifactId>jackson-mapper-asl</artifactId>
+            <version>1.9.13</version>
+        </dependency>
+
     </dependencies>
 
     <build>
@@ -49,17 +72,25 @@
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-jar-plugin</artifactId>
-                <version>2.5</version>
+                <artifactId>maven-shade-plugin</artifactId>
+                <version>2.3</version>
+                <executions>
+                    <execution>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>shade</goal>
+                        </goals>
+                    </execution>
+                </executions>
                 <configuration>
+                    <finalName>${artifactId}-${version}</finalName>
+                    <transformers>
+                        <!-- add Main-Class to manifest file -->
+                        <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+                            <mainClass>${app.main.class}</mainClass>
+                        </transformer>
+                    </transformers>
                     <outputDirectory>/Users/tannacitraramaniya/Desktop</outputDirectory>
-                    <archive>
-                        <manifest>
-                            <addClasspath>true</addClasspath>
-                            <classpathPrefix>lib/</classpathPrefix>
-                            <mainClass>com.cramaniya.apps.dc.salcalc.App</mainClass>
-                        </manifest>
-                    </archive>
                 </configuration>
             </plugin>
         </plugins>

@@ -1,7 +1,0 @@
-Manifest-Version: 1.0
-Class-Path: lib/lombok-1.14.8.jar
-Build-Jdk: 1.8.0_05
-Built-By: tannacitraramaniya
-Created-By: IntelliJ IDEA
-Main-Class: com.cramaniya.apps.dc.salcalc.App
-

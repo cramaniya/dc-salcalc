@@ -1,7 +1,24 @@
-.font-read {
+.text-field:disabled {
+    -fx-background-color: lightgray;
+}
+
+.text-result {
+    -fx-font-weight: bold;
+    -fx-opacity: 0.7;
+}
+
+.text-header {
+    -fx-font-weight: bold;
+    -fx-font-size: 14;
+    -fx-pref-height: 30px;
+    -fx-alignment: bottom-left;
+}
+
+.text-red {
     -fx-text-fill: red;
 }
 
-.font-blue {
-    -fx-text-fill: blue;
+.text-green {
+    -fx-text-fill: green;
 }
+

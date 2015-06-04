@@ -1,5 +1,8 @@
 package com.cramaniya.apps.dc.salcalc;
 
+import com.cramaniya.apps.dc.salcalc.configuration.WagePropertyConfig;
+import com.cramaniya.apps.dc.salcalc.ui.ContentUi;
+import com.cramaniya.apps.dc.salcalc.ui.MenuUi;
 import javafx.application.Application;
 import javafx.geometry.Insets;
 import javafx.scene.Scene;
@@ -9,10 +12,11 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.stage.Stage;
 
-import com.cramaniya.apps.dc.salcalc.ui.ContentUi;
-import com.cramaniya.apps.dc.salcalc.ui.MenuUi;
+import javax.annotation.Resource;
 
 /**
+ * Main class.
+ *
  * @author Citra Ramaniya
  */
 public class App extends Application {
@@ -28,7 +32,7 @@ public class App extends Application {
 	@Override
 	public void start(Stage primaryStage) throws Exception {
 		this.window = primaryStage;
-		window.setTitle("Tiffany's Salary Calculation App");
+		window.setTitle(WagePropertyConfig.APP_NAME);
 		BorderPane rootLayout = new BorderPane();
 
 		MenuUi menuUi = new MenuUi(window, new MenuBar());
@@ -46,6 +50,7 @@ public class App extends Application {
 		rootLayout.setBottom(footer);
 
 		mainScene = new Scene(rootLayout);
+		//noinspection ConstantConditions
 		String stylesheet = this.getClass().getClassLoader().getResource("styles.css").toExternalForm();
 		assert stylesheet != null;
 		mainScene.getStylesheets().addAll(stylesheet);
