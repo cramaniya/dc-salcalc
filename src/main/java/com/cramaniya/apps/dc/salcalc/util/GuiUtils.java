@@ -1,10 +1,7 @@
 package com.cramaniya.apps.dc.salcalc.util;
 
 import javafx.scene.Node;
-import javafx.scene.control.CheckBox;
-import javafx.scene.control.Control;
-import javafx.scene.control.Label;
-import javafx.scene.control.TextField;
+import javafx.scene.control.*;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.Pane;
 import lombok.Getter;
@@ -60,7 +57,20 @@ public class GuiUtils {
 	/**
 	 * Returns integer value from a string.
 	 *
-	 * @param input string input
+	 * @return integer value
+	 */
+	public static String getString(Integer value) {
+		if (value == null) {
+			return "";
+		} else {
+			return String.valueOf(value);
+		}
+	}
+
+	/**
+	 * Returns integer value from a string.
+	 *
+	 * @param input LabelAndTextField
 	 * @return integer value
 	 */
 	public static int getInt(LabelAndTextField input, Integer defaultValue) {
@@ -129,6 +139,12 @@ public class GuiUtils {
 		}
 	}
 
+	public static void createEmptyRow(GridPane layout, int rowIndex, int height) {
+		Pane emptyRow = new Pane();
+		emptyRow.setMinHeight(height);
+		layout.add(emptyRow, 0, rowIndex);
+	}
+
 	public static void createEmptyRow(GridPane layout, int rowIndex) {
 		Pane emptyRow = new Pane();
 		emptyRow.setMinHeight(20);
@@ -148,6 +164,20 @@ public class GuiUtils {
 	}
 
 	/**
+	 * Create text field.
+	 *
+	 * @param labelName    the label name
+	 * @param promptText   the text prompt
+	 * @param defaultValue the default value
+	 * @param toolTipText  tooltip text
+	 * @return LabelAndTextField
+	 */
+	public static LabelAndTextField createTextField(String labelName, String promptText, String defaultValue, String
+			toolTipText) {
+		return createTextField(labelName, promptText, false, defaultValue, toolTipText);
+	}
+
+	/**
 	 * Create text field. Has the same function as {@link #createTextField(String, String, String)}, but
 	 * with extra 'disabled' parameter.
 	 *
@@ -159,6 +189,22 @@ public class GuiUtils {
 	 */
 	public static LabelAndTextField createTextField(String labelName, String promptText, boolean disabled, String
 			defaultValue) {
+		return createTextField(labelName, promptText, disabled, defaultValue, null);
+	}
+
+	/**
+	 * Create text field. Has the same function as {@link #createTextField(String, String, String)}, but
+	 * with extra 'disabled' parameter.
+	 *
+	 * @param labelName    the label name
+	 * @param promptText   the text prompt
+	 * @param disabled     is the textfield disabled?
+	 * @param defaultValue the default value
+	 * @param toolTipText  tooltip text
+	 * @return LabelAndTextField
+	 */
+	public static LabelAndTextField createTextField(String labelName, String promptText, boolean disabled, String
+			defaultValue, String toolTipText) {
 
 		assert labelName != null && !"".equals(labelName.trim());
 
@@ -169,6 +215,8 @@ public class GuiUtils {
 		textField.setPromptText(promptText);
 		textField.setDisable(disabled);
 		textField.setText(defaultValue);
+		if (toolTipText != null && toolTipText.trim().length() > 0)
+			textField.setTooltip(new Tooltip(toolTipText));
 
 		return new LabelAndTextField(label, textField);
 	}

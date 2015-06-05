@@ -18,7 +18,7 @@ public class StringUtils {
 	 *            BigDecimal input
 	 * @return String in Indonesian Currency
 	 */
-	public static String formatToIndonesiaCurrency(BigDecimal value) {
+	public static String formatToIndonesianCurrency(BigDecimal value) {
 		NumberFormat currencyFormat = NumberFormat.getCurrencyInstance(new Locale("in", "ID"));
 		currencyFormat.setMinimumFractionDigits(1);
 		currencyFormat.setMaximumFractionDigits(2);

@@ -4,7 +4,7 @@
 
     <groupId>com.cramaniya.apps</groupId>
     <artifactId>dc-salcalc</artifactId>
-    <version>0.1</version>
+    <version>0.2-SNAPSHOT</version>
     <packaging>jar</packaging>
 
     <name>dc-salcalc</name>
@@ -90,7 +90,6 @@
                             <mainClass>${app.main.class}</mainClass>
                         </transformer>
                     </transformers>
-                    <outputDirectory>/Users/tannacitraramaniya/Desktop</outputDirectory>
                 </configuration>
             </plugin>
         </plugins>

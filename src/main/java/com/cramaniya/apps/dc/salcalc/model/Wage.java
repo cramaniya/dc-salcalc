@@ -125,73 +125,122 @@ public class Wage implements Serializable {
 	@FieldOrder(value = 13)
 	private Date createdTs;
 
+	@FieldOrder(value = 14)
+	private BigDecimal currentAdjustment;
+
+	@FieldOrder(value = 15)
+	private BigDecimal prevAdjustment;
+
 	/**
 	 * Number of working hours for incentives.
 	 * Maximum is always 160.
 	 */
-	private transient Integer incentivesHours;
-	private transient BigDecimal decNormalWorkingHours;
-	private transient BigDecimal decSundayWorkingHours;
+	private transient BigDecimal incentivesHours;
+
+	private transient double extraHours;
+
+	/**
+	 * The normal working hours without extra hours.
+	 */
+	private transient BigDecimal decPlainWorkingHours;
+
+	/**
+	 * The extra hours.
+	 * On Sundays the hours weight is 1.5 of normal hours.
+	 * If user logged 2 hours on Sunday then the system recognizes it as 3 hours (2 * 1.5)
+	 */
+	private transient BigDecimal decWithExtraWorkingHours;
+
+	/**
+	 * Holidays working hours.
+	 */
 	private transient BigDecimal decHolidayWorkingHours;
 
 	private void prepare() {
-		// working hours for incentives
-		if (normalWorkingHours > 160) {
-			this.incentivesHours = 160;
-		} else {
-			this.incentivesHours = normalWorkingHours;
-		}
+		// find the total of Sunday working hours.
+		double totalSundays = sundayWorkingHours * 1.5; // 3 hours (2 * 1.5)
+
+		// find the normal hours excluding Sundays' extra.
+		extraHours = totalSundays - sundayWorkingHours; // 1 extra hours (3 - 2)
+
+		double totalWithoutExtra = (normalWorkingHours + holidayWorkingHours) - extraHours;
 
 		// set BigDecimal values
-		decNormalWorkingHours = BigDecimal.valueOf(normalWorkingHours);
-		decSundayWorkingHours = BigDecimal.valueOf(sundayWorkingHours * 1.5); // normal hours * 1.5
-		decHolidayWorkingHours = BigDecimal.valueOf(holidayWorkingHours * 2); // normal hours * 2
+		decPlainWorkingHours = BigDecimal.valueOf(totalWithoutExtra);
+		decWithExtraWorkingHours = BigDecimal.valueOf(normalWorkingHours);
+		decHolidayWorkingHours = BigDecimal.valueOf(holidayWorkingHours);
+
+		// working hours for incentives
+
+		if ((normalWorkingHours - extraHours) > 160) {
+			this.incentivesHours = BigDecimal.valueOf(160);
+		} else {
+			this.incentivesHours = BigDecimal.valueOf(normalWorkingHours - extraHours);
+		}
+
 	}
 
 	public BigDecimal getTotalWorkingHours() {
-		return BigDecimal.ZERO.add(decNormalWorkingHours).add(decSundayWorkingHours).add(decHolidayWorkingHours);
+		return decWithExtraWorkingHours.add(decHolidayWorkingHours);
+	}
+
+	public BigDecimal getTotalAllowanceHours() {
+		return getTotalWorkingHours().subtract(decPlainWorkingHours);
 	}
 
 	/**
-	 * Returns base wage.
-	 */
-	public BigDecimal getWageWorkingHoursTotal() {
-		return getWageWorkingHours().add(getWageWorkingHoursSundays()).add(getWageWorkingHoursHolidays());
-	}
-
-	/**
-	 * Returns wage with public holiday calculation.
+	 * Returns base income.
 	 */
 	public BigDecimal getWageWorkingHours() {
-		return currentWageProperty.getWorkingHoursRate().multiply(decNormalWorkingHours);
+		return currentWageProperty.getWorkingHoursRate().multiply(decWithExtraWorkingHours);
 	}
 
 	/**
-	 * Returns wage with public holiday calculation.
-	 */
-	public BigDecimal getWageWorkingHoursSundays() {
-		return currentWageProperty.getWorkingHoursRate().multiply(decSundayWorkingHours);
-	}
-
-	/**
-	 * Returns wage with public holiday calculation.
+	 * Returns income with public holiday calculation.
 	 */
 	public BigDecimal getWageWorkingHoursHolidays() {
 		return currentWageProperty.getWorkingHoursRate().multiply(decHolidayWorkingHours);
 	}
 
 	/**
+	 * Returns base wage.
+	 */
+	public BigDecimal getWageWorkingHoursTotal() {
+		return getWageWorkingHours().add(getWageWorkingHoursHolidays());
+	}
+
+	/**
 	 * Returns wage for meals.
 	 */
 	public BigDecimal getWageMeals() {
-		return currentWageProperty.getMealsRate().multiply(decNormalWorkingHours);
+		return currentWageProperty.getMealsRate().multiply(decPlainWorkingHours);
 	}
 
 	/**
 	 * Returns wage for incentives.
 	 */
 	public BigDecimal getWageIncentives() {
-		return currentWageProperty.getIncentivesRate().multiply(BigDecimal.valueOf(incentivesHours));
+		return currentWageProperty.getIncentivesRate().multiply(incentivesHours);
+	}
+
+	/**
+	 * Returns wage allowance total.
+	 */
+	public BigDecimal getWageCallOutTotal() {
+		BigDecimal callOut1 = currentWageProperty.getCallOutAreaOneRate().multiply(BigDecimal.valueOf
+				(numOfCallOutArea1));
+		BigDecimal callOut2 = currentWageProperty.getCallOutAreaTwoRate().multiply(BigDecimal.valueOf
+				(numOfCallOutArea2));
+		BigDecimal callOut3 = currentWageProperty.getCallOutAreaThreeRate().multiply(BigDecimal.valueOf
+				(numOfCallOutArea3));
+		return callOut1.add(callOut2).add(callOut3);
+	}
+
+	/**
+	 * Returns wage allowance total.
+	 */
+	public BigDecimal getWageAllowanceTotal() {
+		return getWageMeals().add(getWageIncentives()).add(getWageCallOutTotal());
 	}
 
 	/**
@@ -223,24 +272,19 @@ public class Wage implements Serializable {
 	/**
 	 * Returns total net wage.
 	 */
-	public BigDecimal getWageTotal() {
-		BigDecimal callOut1 = currentWageProperty.getCallOutAreaOneRate().multiply(BigDecimal.valueOf
-				(numOfCallOutArea1));
-		BigDecimal callOut2 = currentWageProperty.getCallOutAreaTwoRate().multiply(BigDecimal.valueOf
-				(numOfCallOutArea2));
-		BigDecimal callOut3 = currentWageProperty.getCallOutAreaThreeRate().multiply(BigDecimal.valueOf
-				(numOfCallOutArea3));
-		BigDecimal totalCallOut = callOut1.add(callOut2).add(callOut3);
-
+	public BigDecimal getWageGross() {
 		// Wage without deduction
-		BigDecimal totalWage = getWageWorkingHoursTotal()
-				.add(getWageMeals())
-				.add(getWageIncentives())
-				.add(totalCallOut);
+		return getWageWorkingHoursTotal()
+				.add(getWageAllowanceTotal())
+				.add(currentAdjustment)
+				.add(prevAdjustment);
+	}
 
-		totalWage = totalWage.subtract(getWageDeduction());
-
-		return totalWage;
+	/**
+	 * Returns total net wage.
+	 */
+	public BigDecimal getWageNet() {
+		return getWageGross().subtract(getWageDeduction());
 	}
 
 	/**
@@ -264,10 +308,13 @@ public class Wage implements Serializable {
 	 * @param koperasiDeduction   deduct for koperasi
 	 * @param taxDeduction        deduct for tax
 	 * @param tax                 the tax
+	 * @param currentAdjustment   current month adjustment
+	 * @param prevAdjustment      previous month adjustment
 	 */
 	public Wage(Month month, Integer year, int normalWorkingHours, int sundayWorkingHours, int
 			holidayWorkingHours, int numOfCallOutArea1, int numOfCallOutArea2, int numOfCallOutArea3,
-	            boolean jamsostekDeduction, boolean koperasiDeduction, boolean taxDeduction, BigDecimal tax) {
+	            boolean jamsostekDeduction, boolean koperasiDeduction, boolean taxDeduction, BigDecimal tax,
+	            BigDecimal currentAdjustment, BigDecimal prevAdjustment) {
 
 		this.month = month;
 		this.year = year;
@@ -282,6 +329,8 @@ public class Wage implements Serializable {
 		this.koperasiDeduction = koperasiDeduction;
 		this.taxDeduction = taxDeduction;
 		this.tax = tax;
+		this.currentAdjustment = currentAdjustment;
+		this.prevAdjustment = prevAdjustment;
 
 		prepare();
 	}
@@ -302,10 +351,13 @@ public class Wage implements Serializable {
 	 * @param koperasiDeduction   deduct for koperasi
 	 * @param taxDeduction        deduct for tax
 	 * @param tax                 the tax
+	 * @param currentAdjustment   current month adjustment
+	 * @param prevAdjustment      previous month adjustment
 	 */
 	public Wage(Date createTs, Month month, Integer year, int normalWorkingHours, int sundayWorkingHours, int
 			holidayWorkingHours, int numOfCallOutArea1, int numOfCallOutArea2, int numOfCallOutArea3,
-	            boolean jamsostekDeduction, boolean koperasiDeduction, boolean taxDeduction, BigDecimal tax) {
+	            boolean jamsostekDeduction, boolean koperasiDeduction, boolean taxDeduction, BigDecimal tax,
+	            BigDecimal currentAdjustment, BigDecimal prevAdjustment) {
 
 		this.month = month;
 		this.year = year;
@@ -320,6 +372,8 @@ public class Wage implements Serializable {
 		this.koperasiDeduction = koperasiDeduction;
 		this.taxDeduction = taxDeduction;
 		this.tax = tax;
+		this.currentAdjustment = currentAdjustment;
+		this.prevAdjustment = prevAdjustment;
 
 		if (createTs != null) {
 			this.createdTs = createTs;

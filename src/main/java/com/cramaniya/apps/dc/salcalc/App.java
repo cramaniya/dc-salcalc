@@ -8,8 +8,10 @@ import javafx.geometry.Insets;
 import javafx.scene.Scene;
 import javafx.scene.control.Label;
 import javafx.scene.control.MenuBar;
+import javafx.scene.control.Separator;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 
 import javax.annotation.Resource;
@@ -41,12 +43,12 @@ public class App extends Application {
 
 		ContentUi contentUi = new ContentUi();
 		contentUi.createContent();
-		rootLayout.setCenter(contentUi.getLayout());
+		rootLayout.setCenter(contentUi.getMainLayout());
 
-		HBox footer = new HBox();
+		VBox footer = new VBox();
 		footer.setPadding(new Insets(15, 15, 15, 15));
 		Label footerLabel = new Label("©2015 Citra Ramaniya");
-		footer.getChildren().add(footerLabel);
+		footer.getChildren().addAll(footerLabel);
 		rootLayout.setBottom(footer);
 
 		mainScene = new Scene(rootLayout);

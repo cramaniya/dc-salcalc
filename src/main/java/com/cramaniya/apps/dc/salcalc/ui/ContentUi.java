@@ -1,14 +1,16 @@
 package com.cramaniya.apps.dc.salcalc.ui;
 
-import com.cramaniya.apps.dc.salcalc.configuration.WagePropertyConfig;
 import com.cramaniya.apps.dc.salcalc.event.AlertBox;
 import com.cramaniya.apps.dc.salcalc.model.Wage;
 import com.cramaniya.apps.dc.salcalc.util.WageCSVUtils;
+import javafx.geometry.HPos;
 import javafx.geometry.Insets;
+import javafx.geometry.Orientation;
+import javafx.geometry.Pos;
 import javafx.scene.control.*;
-import javafx.scene.layout.GridPane;
-import javafx.scene.layout.HBox;
-import javafx.scene.layout.Pane;
+import javafx.scene.layout.*;
+import javafx.scene.paint.Color;
+import javafx.scene.text.Text;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
@@ -19,8 +21,9 @@ import java.time.LocalDate;
 import java.time.Month;
 import java.util.Date;
 
+import static com.cramaniya.apps.dc.salcalc.configuration.WagePropertyConfig.*;
 import static com.cramaniya.apps.dc.salcalc.util.GuiUtils.*;
-import static com.cramaniya.apps.dc.salcalc.util.StringUtils.formatToIndonesiaCurrency;
+import static com.cramaniya.apps.dc.salcalc.util.StringUtils.formatToIndonesianCurrency;
 
 /**
  * Class for Content GUI.
@@ -32,7 +35,11 @@ import static com.cramaniya.apps.dc.salcalc.util.StringUtils.formatToIndonesiaCu
 @Slf4j
 public class ContentUi {
 
-	private GridPane layout = new GridPane();
+	private HBox mainLayout = new HBox(10);
+
+	private GridPane leftLayout = new GridPane();
+	private GridPane rightLayout = new GridPane();
+	private GridPane summaryLayout = new GridPane();
 
 	private ComboBox<Month> months;
 	private ComboBox<Integer> years;
@@ -40,11 +47,12 @@ public class ContentUi {
 	private LabelAndTextField workingHoursInput;
 	private LabelAndTextField workingHoursSundayInput;
 	private LabelAndTextField workingHoursPublicHolidayInput;
-	private LabelAndTextField workingHoursPublicHolidaySundyInput;
-
 	private LabelAndTextField callOut1Input;
 	private LabelAndTextField callOut2Input;
 	private LabelAndTextField callOut3Input;
+
+	private LabelAndTextField currentAdjustmentInput;
+	private LabelAndTextField prevAdjustmentInput;
 
 	private CheckBox jamsostekCheckBox;
 	private CheckBox koperasiCheckBox;
@@ -53,32 +61,48 @@ public class ContentUi {
 
 	private LabelAndTextField totalWorkingHoursInput;
 	private LabelAndTextField wageWorkingHoursInput;
-	private LabelAndTextField wageWorkingHoursSundaysInput;
 	private LabelAndTextField wageWorkingHoursHolidaysInput;
 	private LabelAndTextField wageWorkingHoursTotalInput;
 
+	private LabelAndTextField wageAllowanceTotalInput;
 	private LabelAndTextField wageMealsInput;
 	private LabelAndTextField wageIncentivesInput;
-	private LabelAndTextField totalDeductionInput;
+	private LabelAndTextField wageDeductionInput;
 
-	private LabelAndTextField totalWageInput;
+	private LabelAndTextField wageGrossInput;
+	private LabelAndTextField wageNetInput;
 
 	private int rowIndex = 0;
 
 	private WageCSVUtils wageCsv;
 
 	public ContentUi() {
-		layout.setPadding(new Insets(15, 15, 15, 15));
-		layout.setVgap(8);
-		layout.setHgap(10);
+		mainLayout.setPadding(new Insets(15, 15, 20, 15));
+		VBox.setVgrow(mainLayout, Priority.ALWAYS);
 
-		wageCsv = new WageCSVUtils(WagePropertyConfig.resourcesDir.getPath() + "/" + WagePropertyConfig.STORAGE_FILE);
+		leftLayout.setPadding(new Insets(15, 15, 15, 15));
+		leftLayout.setVgap(8);
+		leftLayout.setHgap(10);
+
+		rightLayout.setPadding(new Insets(15, 15, 15, 15));
+		rightLayout.setVgap(8);
+		rightLayout.setHgap(10);
+
+		summaryLayout.setVgap(2);
+		summaryLayout.setHgap(5);
+		summaryLayout.setAlignment(Pos.TOP_RIGHT);
+		summaryLayout.setMinHeight(200);
+
+		wageCsv = new WageCSVUtils(resourcesDir.getPath() + "/" + STORAGE_FILE);
 	}
 
 	public void createContent() {
 
 		LocalDate currentDate = LocalDate.now();
 
+		/**
+		 * Inputs: Left Layout
+		 */
 		// Month
 		Label monthLabel = new Label("Month");
 		months = new ComboBox<>();
@@ -94,53 +118,66 @@ public class ContentUi {
 			years.getItems().add(i);
 		}
 		years.getSelectionModel().select(Integer.valueOf(currentDate.getYear()));
-		layout.addRow(rowIndex, monthLabel, months, yearLabel, years);
+		leftLayout.addRow(rowIndex, monthLabel, months, yearLabel, years);
 
 		// Working hours
 		Label workingHoursHeader = new Label("Working hours calculation");
-		layout.add(workingHoursHeader, 0, ++rowIndex, 4, 1);
-		workingHoursInput = createTextField("On work days", "Working hours", "160");
-		workingHoursSundayInput = createTextField("On Sundays", "Sunday working hours", "");
+		leftLayout.add(workingHoursHeader, 0, ++rowIndex, 4, 1);
+		workingHoursInput = createTextField("Total working hours", "Working hours", "160", "Total working hours " +
+				"logged");
+		workingHoursSundayInput = createTextField("On Sundays", "Sunday working hours", "", "How many working hours " +
+				"logged on Sundays?");
 		// Public holidays
-		workingHoursPublicHolidayInput = createTextField("On public holidays", "Working hours on public holiday", "");
-		addRowToLayout(layout, ++rowIndex, workingHoursInput, workingHoursSundayInput);
-		addRowToLayout(layout, ++rowIndex, workingHoursPublicHolidayInput);
+		workingHoursPublicHolidayInput = createTextField("On public holidays", "Public holidays working hours", "",
+				"How many working hours logged on public holidays?");
+		addRowToLayout(leftLayout, ++rowIndex, workingHoursInput, workingHoursSundayInput);
+		addRowToLayout(leftLayout, ++rowIndex, workingHoursPublicHolidayInput);
 
 		// Call out
-		int rowHeader = ++rowIndex;
 		Label callOutHeader = new Label("Call out calculation");
-		layout.add(callOutHeader, 0, rowIndex, 2, 1);
+		leftLayout.add(callOutHeader, 0, ++rowIndex, 4, 1);
 		// Call out area 1
 		callOut1Input = createTextField("Area 1", "Call outs in area 1", "");
-		addRowToLayout(layout, ++rowIndex, callOut1Input);
+		addRowToLayout(leftLayout, ++rowIndex, callOut1Input);
 		// Call out area 2
 		callOut2Input = createTextField("Area 2", "Call outs in area 2", "");
-		addRowToLayout(layout, ++rowIndex, callOut2Input);
+		addRowToLayout(leftLayout, ++rowIndex, callOut2Input);
 		// Call out area 3
 		callOut3Input = createTextField("Area 3", "Call outs in area 3", "");
-		addRowToLayout(layout, ++rowIndex, callOut3Input);
+		addRowToLayout(leftLayout, ++rowIndex, callOut3Input);
+
+		// Adjustments
+		Label adjustmentHeader = new Label("Adjustments");
+		leftLayout.add(adjustmentHeader, 0, ++rowIndex, 4, 1);
+		currentAdjustmentInput = createTextField("Current Adjustment", "Current adjustment", "");
+		prevAdjustmentInput = createTextField("Previous Adjustment", "Previous adjustment", "");
+		addRowToLayout(leftLayout, ++rowIndex, currentAdjustmentInput);
+		addRowToLayout(leftLayout, ++rowIndex, prevAdjustmentInput);
 
 		// Wage deduction
-		rowIndex = rowHeader;
 		Label deductionHeader = new Label("Deduction");
-		layout.add(deductionHeader, 2, rowIndex, 4, 1);
+		leftLayout.add(deductionHeader, 0, ++rowIndex, 4, 1);
 		Label deductionLabel = new Label("Deduction");
 		// jamsostek
 		jamsostekCheckBox = new CheckBox("Jamsostek");
 		jamsostekCheckBox.setId("jamsostekChk");
-		layout.addRow(++rowIndex, deductionLabel, jamsostekCheckBox);
+		leftLayout.addRow(++rowIndex, deductionLabel, jamsostekCheckBox);
 		// koperasi
 		koperasiCheckBox = new CheckBox("Koperasi");
 		koperasiCheckBox.setId("koperasiChk");
-		layout.addRow(++rowIndex, new Pane(), koperasiCheckBox);
+		leftLayout.addRow(++rowIndex, new Pane(), koperasiCheckBox);
 		// tax
 		taxCheckBox = new CheckBox("Tax");
 		taxCheckBox.setId("taxChk");
-		layout.addRow(++rowIndex, new Pane(), taxCheckBox);
 		taxInput = createTextField("Tax", "Tax", true, "");
-		addRowToLayout(layout, 2, ++rowIndex, taxInput);
+		leftLayout.addRow(++rowIndex, new Pane(), taxCheckBox, taxInput.getLabel(), taxInput.getTextField());
 
-		setStyleClassToElements("text-header", workingHoursHeader, callOutHeader, deductionHeader);
+		// notes
+		Label notesLabel = new Label("Notes");
+		TextArea notesTextArea = new TextArea();
+		notesTextArea.setPrefRowCount(2);
+		leftLayout.addRow(++rowIndex, notesLabel);
+		leftLayout.add(notesTextArea, 1, rowIndex, 3, 1);
 
 		/**
 		 * Listener
@@ -159,10 +196,14 @@ public class ContentUi {
 		calculateButton.setOnAction(event -> calculateWage());
 		// clear
 		Button clearButton = new Button("Clear");
-		clearButton.setOnAction(event -> clearInputs(layout, true, taxInput));
+		clearButton.setOnAction(event -> {
+			clearInputs(leftLayout, true, taxInput);
+			clearInputs(rightLayout, true, taxInput);
+			summaryLayout.getChildren().clear();
+		});
 
 		rightButtonLayout.getChildren().addAll(clearButton, calculateButton);
-		layout.add(rightButtonLayout, 3, ++rowIndex);
+		leftLayout.add(rightButtonLayout, 3, ++rowIndex);
 
 		/**
 		 * Left Button save
@@ -177,68 +218,113 @@ public class ContentUi {
 		loadButton.setOnAction(event -> loadWage());
 
 		leftButtonLayout.getChildren().addAll(loadButton, saveButton);
-		layout.add(leftButtonLayout, 0, rowIndex);
+		leftLayout.add(leftButtonLayout, 0, rowIndex);
 
-		layout.add(new Separator(), 0, ++rowIndex, 4, 1);
-		createEmptyRow(layout, ++rowIndex);
+		createEmptyRow(leftLayout, ++rowIndex);
 
 		/**
-		 * Result
+		 * Result: Right Layout
 		 */
+		rowIndex = 0;
+		Label resultHeader = new Label("Calculated Salary");
+		rightLayout.add(resultHeader, 0, rowIndex, 4, 1);
+
 		// Total working hours
-		totalWorkingHoursInput = createTextField("Total Working Hours", "", true, "");
-		addRowToLayout(layout, ++rowIndex, totalWorkingHoursInput);
+//		totalWorkingHoursInput = createTextField("Total Working Hours", "", true, "");
+//		addRowToLayout(rightLayout, ++rowIndex, totalWorkingHoursInput);
 		// Wage working hours total
-		wageWorkingHoursTotalInput = createTextField("Wage Working Hours", "", true, "");
+		wageWorkingHoursTotalInput = createTextField("Basic Working Hours", "", true, "");
 		// normal working hours
 		wageWorkingHoursInput = createTextField("Mon - Fri", "", true, "");
 		// Sundays working hours
-		wageWorkingHoursSundaysInput = createTextField("Sunday", "", true, "");
+		// wageWorkingHoursSundaysInput = createTextField("Sunday", "", true, "");
 		// Holidays working hours
 		wageWorkingHoursHolidaysInput = createTextField("Holidays", "", true, "");
-		addRowToLayout(layout, ++rowIndex, wageWorkingHoursTotalInput, wageWorkingHoursInput);
-		layout.add(wageWorkingHoursSundaysInput.getLabel(), 2, ++rowIndex);
-		layout.add(wageWorkingHoursSundaysInput.getTextField(), 3, rowIndex);
-		layout.add(wageWorkingHoursHolidaysInput.getLabel(), 2, ++rowIndex);
-		layout.add(wageWorkingHoursHolidaysInput.getTextField(), 3, rowIndex);
+		addRowToLayout(rightLayout, ++rowIndex, wageWorkingHoursTotalInput, wageWorkingHoursInput);
+		// rightLayout.add(wageWorkingHoursSundaysInput.getLabel(), 2, ++rowIndex);
+		// rightLayout.add(wageWorkingHoursSundaysInput.getTextField(), 3, rowIndex);
+		rightLayout.add(wageWorkingHoursHolidaysInput.getLabel(), 2, ++rowIndex);
+		rightLayout.add(wageWorkingHoursHolidaysInput.getTextField(), 3, rowIndex);
 
+		createEmptyRow(leftLayout, ++rowIndex);
 
-		// Meals money
-		wageMealsInput = createTextField("Meals", "", true, "");
-		addRowToLayout(layout, ++rowIndex, wageMealsInput);
+		// Total allowance
+		wageAllowanceTotalInput = createTextField("Total Allowance", "", true, "");
+		addRowToLayout(rightLayout, ++rowIndex, wageAllowanceTotalInput);
+//		// Meals money
+//		wageMealsInput = createTextField("Meals", "", true, "");
+//		addRowToLayout(rightLayout, ++rowIndex, wageMealsInput);
+//		// Incentives money
+//		wageIncentivesInput = createTextField("Incentives", "", true, "");
+//		addRowToLayout(rightLayout, ++rowIndex, wageIncentivesInput);
 
-		// Incentives money
-		wageIncentivesInput = createTextField("Incentives", "", true, "");
-		addRowToLayout(layout, ++rowIndex, wageIncentivesInput);
+		// Gross income
+		wageGrossInput = createTextField("Gross Income", "", true, "");
+		addRowToLayout(rightLayout, ++rowIndex, wageGrossInput);
 
-		// Total deduction
-		totalDeductionInput = createTextField("Deduction", "", true, "");
-		addRowToLayout(layout, ++rowIndex, totalDeductionInput);
+		createEmptyRow(rightLayout, ++rowIndex);
 
-		createEmptyRow(layout, ++rowIndex);
+		// Total expenses and Tax
+		wageDeductionInput = createTextField("Expenses + Tax", "", true, "");
+		addRowToLayout(rightLayout, ++rowIndex, wageDeductionInput);
+
+		createEmptyRow(leftLayout, ++rowIndex);
 
 		// Total
-		totalWageInput = createTextField("Total Net", "", true, "");
-		addRowToLayout(layout, ++rowIndex, totalWageInput);
+		wageNetInput = createTextField("Net Income", "", true, "");
+		addRowToLayout(rightLayout, ++rowIndex, wageNetInput);
+
+		createEmptyRow(leftLayout, ++rowIndex);
+		rightLayout.add(new Separator(), 0, ++rowIndex, 4, 1);
+
+		rightLayout.add(summaryLayout, 0, ++rowIndex, 4, 1);
+
+		/**
+		 * Set styles
+		 */
+		setStyleClassToElements("text-header", workingHoursHeader, callOutHeader, adjustmentHeader, deductionHeader,
+				resultHeader);
 
 		setStyleClassToElements("text-result",
-				totalWorkingHoursInput.getTextField(),
+//				totalWorkingHoursInput.getTextField(),
 				wageWorkingHoursInput.getTextField(),
 				wageWorkingHoursTotalInput.getTextField(),
-				wageWorkingHoursSundaysInput.getTextField(),
 				wageWorkingHoursHolidaysInput.getTextField(),
-				wageMealsInput.getTextField(),
-				wageIncentivesInput.getTextField(),
-				totalDeductionInput.getTextField(),
-				totalWageInput.getTextField());
+				wageAllowanceTotalInput.getTextField(),
+//				wageMealsInput.getTextField(),
+//				wageIncentivesInput.getTextField(),
+				wageDeductionInput.getTextField(),
+				wageGrossInput.getTextField(),
+				wageNetInput.getTextField());
 
 		setStyleClassToElements("text-green",
 				wageWorkingHoursTotalInput.getTextField(),
-				wageMealsInput.getTextField(),
-				wageIncentivesInput.getTextField());
+//				wageMealsInput.getTextField(),
+//				wageIncentivesInput.getTextField(),
+				wageAllowanceTotalInput.getTextField()
+		);
 
-		totalDeductionInput.getTextField().setStyle("-fx-text-fill: red;");
-		totalWageInput.getTextField().setStyle("-fx-text-fill: blue;");
+		setStyleClassToElements("text-align-right",
+				wageWorkingHoursTotalInput.getTextField(),
+				wageWorkingHoursInput.getTextField(),
+				// wageWorkingHoursSundaysInput.getTextField(),
+				wageWorkingHoursHolidaysInput.getTextField(),
+//				wageMealsInput.getTextField(),
+//				wageIncentivesInput.getTextField(),
+				wageAllowanceTotalInput.getTextField(),
+				wageGrossInput.getTextField(),
+				wageDeductionInput.getTextField(),
+				wageNetInput.getTextField()
+		);
+
+		wageDeductionInput.getTextField().setStyle("-fx-text-fill: red;");
+		wageGrossInput.getTextField().setStyle("-fx-text-fill: blue;");
+		wageNetInput.getTextField().setStyle("-fx-text-fill: blue;");
+
+		// set layout
+		Separator separator = new Separator();
+		separator.setOrientation(Orientation.VERTICAL);
+		mainLayout.getChildren().addAll(leftLayout, separator, rightLayout);
 	}
 
 	private void loadWage() {
@@ -253,7 +339,7 @@ public class ContentUi {
 
 		// Working hours
 		workingHoursInput.getTextField().setText(String.valueOf(loadedWage.getNormalWorkingHours()));
-		// Public holidays
+		workingHoursSundayInput.getTextField().setText(String.valueOf(loadedWage.getSundayWorkingHours()));
 		workingHoursPublicHolidayInput.getTextField().setText(String.valueOf(loadedWage.getHolidayWorkingHours()));
 
 		// Call out area 1
@@ -262,6 +348,9 @@ public class ContentUi {
 		callOut2Input.getTextField().setText(String.valueOf(loadedWage.getNumOfCallOutArea2()));
 		// Call out area 3
 		callOut3Input.getTextField().setText(String.valueOf(loadedWage.getNumOfCallOutArea3()));
+
+		currentAdjustmentInput.getTextField().setText(String.valueOf(loadedWage.getCurrentAdjustment()));
+		prevAdjustmentInput.getTextField().setText(String.valueOf(loadedWage.getPrevAdjustment()));
 
 		jamsostekCheckBox.setSelected(loadedWage.getJamsostekDeduction());
 		koperasiCheckBox.setSelected(loadedWage.getKoperasiDeduction());
@@ -281,7 +370,8 @@ public class ContentUi {
 		wage.setCreatedTs(new Date());
 		wageCsv.addToCSV(wage);
 
-		AlertBox.display("Entry saved", "Saved data for " + getMonthString(wage.getMonth()) + " " + wage.getYear(), "");
+		AlertBox.display("Entry saved", "Saved data for " + getMonthString(wage.getMonth()) + " "
+				+ wage.getYear(), "");
 	}
 
 	/**
@@ -290,21 +380,98 @@ public class ContentUi {
 	private void calculateWage() {
 
 		// remove error class
-		clearInputs(layout, false, taxInput);
+		clearInputs(leftLayout, false, taxInput);
+		clearInputs(rightLayout, false, taxInput);
 
 		Wage wage = getWage();
 
 		// set the fields
-		totalWorkingHoursInput.getTextField().setText(String.valueOf(wage.getTotalWorkingHours()));
-		wageWorkingHoursTotalInput.getTextField().setText(formatToIndonesiaCurrency(wage.getWageWorkingHoursTotal()));
-		wageWorkingHoursInput.getTextField().setText(formatToIndonesiaCurrency(wage.getWageWorkingHours()));
-		wageWorkingHoursSundaysInput.getTextField().setText(formatToIndonesiaCurrency(wage.getWageWorkingHoursSundays()));
-		wageWorkingHoursHolidaysInput.getTextField().setText(formatToIndonesiaCurrency(wage.getWageWorkingHoursHolidays()));
-		wageMealsInput.getTextField().setText(formatToIndonesiaCurrency(wage.getWageMeals()));
-		wageIncentivesInput.getTextField().setText(formatToIndonesiaCurrency(wage.getWageIncentives()));
-		totalDeductionInput.getTextField().setText(formatToIndonesiaCurrency(wage.getWageDeduction()));
-		totalWageInput.getTextField().setText(formatToIndonesiaCurrency(wage.getWageTotal()));
+//		totalWorkingHoursInput.getTextField().setText(String.valueOf(wage.getTotalWorkingHours()));
+		wageWorkingHoursTotalInput.getTextField().setText(formatToIndonesianCurrency(wage.getWageWorkingHoursTotal()));
+		wageWorkingHoursInput.getTextField().setText(formatToIndonesianCurrency(wage.getWageWorkingHours()));
+		// wageWorkingHoursSundaysInput.getTextField().setText(formatToIndonesianCurrency(wage
+		// .getWageWorkingHoursSundays()));
+		wageWorkingHoursHolidaysInput.getTextField().setText(formatToIndonesianCurrency(wage.getWageWorkingHoursHolidays()));
 
+		wageAllowanceTotalInput.getTextField().setText(String.valueOf(wage.getWageAllowanceTotal()));
+//		wageMealsInput.getTextField().setText(formatToIndonesianCurrency(wage.getWageMeals()));
+//		wageIncentivesInput.getTextField().setText(formatToIndonesianCurrency(wage.getWageIncentives()));
+		wageDeductionInput.getTextField().setText(formatToIndonesianCurrency(wage.getWageDeduction()));
+		wageGrossInput.getTextField().setText(formatToIndonesianCurrency(wage.getWageGross()));
+		wageNetInput.getTextField().setText(formatToIndonesianCurrency(wage.getWageNet()));
+
+		createAndShowSummary(wage);
+	}
+
+	private static final String NEW_LINE_SEPARATOR = "\n";
+
+	private void createAndShowSummary(Wage wage) {
+
+		int rowIndex = 0;
+
+		// reset grid
+		summaryLayout.getChildren().clear();
+
+		// working hours calculation
+		createDetailRow(rowIndex, "Total hours incl. overtime (work days + Sundays):", String.format("%s hours (%s hours + %s hours)", wage.getTotalWorkingHours(), wage.getDecPlainWorkingHours(), wage.getExtraHours()));
+		createDetailRow(++rowIndex, "Basic hours (work day + Sundays):", String.format("%s hours (%s hours + %s hours)", wage.getNormalWorkingHours(), wage.getIncentivesHours(), wage.getExtraHours()));
+		createEmptyRow(summaryLayout, ++rowIndex, 10);
+
+		// basic income
+		createDetailRow(++rowIndex, "Basic income:", formatToIndonesianCurrency(wage.getWageWorkingHours()));
+		createDetailRow(++rowIndex, "Overtime income:", formatToIndonesianCurrency(wage.getWageWorkingHoursHolidays()));
+		createDetailRow(++rowIndex, Color.GREEN, true, "Total basic income (basic income + overtime):",
+				formatToIndonesianCurrency(wage.getWageWorkingHoursTotal()));
+		createEmptyRow(summaryLayout, ++rowIndex, 10);
+
+		// allowance calculation
+		createDetailRow(++rowIndex, "Meals allowance ((total hr - sundays) * meal rate):",
+				formatToIndonesianCurrency(wage.getWageMeals()));
+		createDetailRow(++rowIndex, "Incentives allowance ((basic hr - sundays) * incentives rate):",
+				formatToIndonesianCurrency(wage.getWageIncentives()));
+		createDetailRow(++rowIndex, "Call out allowance:",
+				formatToIndonesianCurrency(wage.getWageCallOutTotal()));
+		createDetailRow(++rowIndex, Color.GREEN, true, "Total allowance:", formatToIndonesianCurrency(wage.getWageAllowanceTotal()));
+		createEmptyRow(summaryLayout, ++rowIndex, 10);
+
+		createDetailRow(++rowIndex, "Current adjustment:", formatToIndonesianCurrency(wage.getCurrentAdjustment()));
+		createDetailRow(++rowIndex, "Previous adjustment:", formatToIndonesianCurrency(wage.getPrevAdjustment()));
+
+		createDetailRow(++rowIndex, Color.BLUE, true, "Gross income:", formatToIndonesianCurrency(wage.getWageGross()));
+		createEmptyRow(summaryLayout, ++rowIndex, 10);
+
+		createDetailRow(++rowIndex, "Jamsostek:", formatToIndonesianCurrency(currentWageProperty.getJamsostekDeduction()));
+		createDetailRow(++rowIndex, "Koperasi:", formatToIndonesianCurrency(currentWageProperty.getKoperasiDeduction()));
+		createDetailRow(++rowIndex, "Tax:", formatToIndonesianCurrency(wage.getTax()));
+		createDetailRow(++rowIndex, Color.RED, true, "Total expense + tax:", formatToIndonesianCurrency(wage.getWageDeduction()));
+		createEmptyRow(summaryLayout, ++rowIndex, 10);
+
+		createDetailRow(++rowIndex, Color.BLUE, true, "Net income:", formatToIndonesianCurrency(wage.getWageGross()));
+
+
+	}
+
+	private void createDetailRow(int rowIndex, String... texts) {
+		for (String textStr : texts) {
+			Text text = new Text(textStr);
+			text.setStyle("-fx-font-size: 11px;");
+			summaryLayout.addRow(rowIndex, text);
+			GridPane.setHalignment(text, HPos.RIGHT);
+		}
+	}
+
+	private void createDetailRow(int rowIndex, Color color, boolean bold, String... texts) {
+		for (String textStr : texts) {
+			Text text = new Text(textStr);
+			String style = "-fx-font-size: 11px;";
+			if (bold) {
+				style += "-fx-font-weight: bold";
+			}
+			text.setStyle(style);
+			text.setFill(color);
+			summaryLayout.addRow(rowIndex, text);
+			summaryLayout.setHalignment(text, HPos.RIGHT);
+		}
 	}
 
 	private Wage getWage() {
@@ -319,10 +486,13 @@ public class ContentUi {
 		if (taxCheckBox.isSelected()) {
 			tax = getBigDecimal(taxInput, null);
 		}
+		BigDecimal currentAdjustment = getBigDecimal(currentAdjustmentInput, null);
+		BigDecimal previousAdjustment = getBigDecimal(prevAdjustmentInput, null);
 
 		return new Wage(months.getSelectionModel().getSelectedItem(), years.getSelectionModel().getSelectedItem
 				(), workingHours, workingHoursSundays, workingHoursHoliday, numCallOut1, numCallOut2, numCallOut3,
-				jamsostekCheckBox.isSelected(), koperasiCheckBox.isSelected(), taxCheckBox.isSelected(), tax);
+				jamsostekCheckBox.isSelected(), koperasiCheckBox.isSelected(), taxCheckBox.isSelected(), tax,
+				currentAdjustment, previousAdjustment);
 	}
 
 

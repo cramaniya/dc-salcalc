@@ -124,7 +124,7 @@ public class WageCSVUtils {
 				} else {
 					bufferedWriter.append(String.valueOf(field.get(entry))).append(COLON_DELIMITER);
 				}
-				str.append(fieldName).append(": ").append(field.get(entry)).append("\n");
+				str.append(fieldName).append(": ").append(field.get(entry)).append(NEW_LINE_SEPARATOR);
 				field.setAccessible(false);
 			}
 			bufferedWriter.append(NEW_LINE_SEPARATOR);

@@ -21,7 +21,7 @@ import static com.cramaniya.apps.dc.salcalc.util.ConversionUtils.toJSON;
 @Slf4j
 public class WagePropertyConfig {
 
-	public static final String APP_NAME = "Tiffany's Wage Calculator App";
+	public static final String APP_NAME = "Tiffany's Income Calculator App";
 
 	public static final String APP_VERSION = "0.1";
 
