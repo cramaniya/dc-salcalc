@@ -246,7 +246,7 @@ public class ContentUi {
 		rightLayout.add(wageWorkingHoursHolidaysInput.getLabel(), 2, ++rowIndex);
 		rightLayout.add(wageWorkingHoursHolidaysInput.getTextField(), 3, rowIndex);
 
-		createEmptyRow(leftLayout, ++rowIndex);
+//		createEmptyRow(leftLayout, ++rowIndex);
 
 		// Total allowance
 		wageAllowanceTotalInput = createTextField("Total Allowance", "", true, "");
@@ -262,13 +262,13 @@ public class ContentUi {
 		wageGrossInput = createTextField("Gross Income", "", true, "");
 		addRowToLayout(rightLayout, ++rowIndex, wageGrossInput);
 
-		createEmptyRow(rightLayout, ++rowIndex);
+//		createEmptyRow(rightLayout, ++rowIndex);
 
 		// Total expenses and Tax
 		wageDeductionInput = createTextField("Expenses + Tax", "", true, "");
 		addRowToLayout(rightLayout, ++rowIndex, wageDeductionInput);
 
-		createEmptyRow(leftLayout, ++rowIndex);
+//		createEmptyRow(leftLayout, ++rowIndex);
 
 		// Total
 		wageNetInput = createTextField("Net Income", "", true, "");
@@ -393,7 +393,7 @@ public class ContentUi {
 		// .getWageWorkingHoursSundays()));
 		wageWorkingHoursHolidaysInput.getTextField().setText(formatToIndonesianCurrency(wage.getWageWorkingHoursHolidays()));
 
-		wageAllowanceTotalInput.getTextField().setText(String.valueOf(wage.getWageAllowanceTotal()));
+		wageAllowanceTotalInput.getTextField().setText(formatToIndonesianCurrency(wage.getWageAllowanceTotal()));
 //		wageMealsInput.getTextField().setText(formatToIndonesianCurrency(wage.getWageMeals()));
 //		wageIncentivesInput.getTextField().setText(formatToIndonesianCurrency(wage.getWageIncentives()));
 		wageDeductionInput.getTextField().setText(formatToIndonesianCurrency(wage.getWageDeduction()));
@@ -446,7 +446,7 @@ public class ContentUi {
 		createDetailRow(++rowIndex, Color.RED, true, "Total expense + tax:", formatToIndonesianCurrency(wage.getWageDeduction()));
 		createEmptyRow(summaryLayout, ++rowIndex, 10);
 
-		createDetailRow(++rowIndex, Color.BLUE, true, "Net income:", formatToIndonesianCurrency(wage.getWageGross()));
+		createDetailRow(++rowIndex, Color.BLUE, true, "Net income:", formatToIndonesianCurrency(wage.getWageNet()));
 
 
 	}
